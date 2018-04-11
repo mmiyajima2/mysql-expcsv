@@ -7,16 +7,14 @@ import pymysql
 def _build_records(connection, query):
     with connection.cursor() as cursor:
         cursor.execute(query)
-        records = []
         for record in cursor:
-            records.append(record)
-        return records
+            yield record
 
 
-def _output(records, dest):
+def _output(asgen, dest):
     with open(dest, 'w', newline='') as f:
         w = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-        for record in records:
+        for record in asgen:
             w.writerow(record)
 
 
@@ -66,9 +64,9 @@ def export(
                 cursorclass=pymysql.cursors.Cursor,
                 )
         # Building records as result set.
-        records = _build_records(connection, query)
+        asgen = _build_records(connection, query)
         # Output
-        _output(records, formatted)
+        _output(asgen, formatted)
     finally:
         connection.close()
 
